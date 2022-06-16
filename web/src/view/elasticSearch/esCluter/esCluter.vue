@@ -61,6 +61,22 @@
         <!-- <el-table-column align="left" label="用户名" prop="userName" width="120" />
         <el-table-column align="left" label="密码" prop="password" width="120" /> -->
         <el-table-column align="left" label="描述" prop="description" width="360" />
+
+        <el-table-column align="left" label="集群归属" min-width="200">
+          <template #default="scope">
+            <el-cascader
+              v-model="scope.row.groupIds"
+              :options="groupOptions"
+              :show-all-levels="false"
+              collapse-tags
+              :props="{ multiple:true,checkStrictly: true,label:'groupName',value:'groupId',disabled:'disabled',emitPath:false}"
+              :clearable="false"
+              @visible-change="(flag)=>{changeGroup(scope.row,flag)}"
+              @remove-tag="()=>{changeGroup(scope.row,false)}"
+            />
+          </template>
+        </el-table-column>
+
         <el-table-column align="left" label="按钮组">
             <template #default="scope">
             <el-button type="text" icon="edit" size="small" class="table-button" @click="updateEsCluterFunc(scope.row)">变更</el-button>
@@ -112,6 +128,16 @@
         <el-form-item label="描述:">
           <el-input v-model="formData.description" clearable placeholder="请输入" />
         </el-form-item>
+        <el-form-item label="集群归属" prop="authorityId">
+            <el-cascader
+              v-model="formData.groupIds"
+              style="width:100%"
+              :options="groupOptions"
+              :show-all-levels="false"
+              :props="{ multiple:true,checkStrictly: true,label:'groupName',value:'groupId',disabled:'disabled',emitPath:false}"
+              :clearable="false"
+            />
+          </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -139,12 +165,17 @@ import {
   findEsCluter,
   getEsCluterList,
   checkEsCluter,
+  setEsCluterGroup,
 } from '@/api/esCluter'
+
+import {
+  getProjectGroupTreeList
+} from '@/api/esProjectGroup'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
@@ -158,6 +189,7 @@ const formData = ref({
         userName: '',
         password: '',
         description: '',
+        groupIds: [],
         })
 
 // =========== 表格控制部分 ===========
@@ -212,16 +244,61 @@ const getTableData = async() => {
   }
 }
 
-getTableData()
+watch(tableData, () => {
+  setGroupIds()
+})
+const setGroupIds = () => {
+  tableData.value && tableData.value.forEach((cluter) => {
+    const groupIds = cluter.group && cluter.group.map(i => {
+      return i.ID
+    })
+    cluter.groupIds = groupIds
+  })
+}
+
+const groupOptions = ref([])
+const setOptions = async (groupData) =>{
+    groupOptions.value = []
+    setGroupOptions(groupData, groupOptions.value)
+}
+
+const setGroupOptions = (GroupData, optionsData) => {
+  GroupData &&
+        GroupData.forEach(item => {
+          if (item.children && item.children.length) {
+            const option = {
+              groupId: item.ID,
+              groupName: item.name,
+              children: []
+            }
+            setGroupOptions(item.children, option.children)
+            optionsData.push(option)
+          } else {
+            const option = {
+              groupId: item.ID,
+              groupName: item.name,
+            }
+            optionsData.push(option)
+          }
+        })
+}
+
+const initPage = async() => {
+  getTableData()
+  const res = await getProjectGroupTreeList({ page: 1, pageSize: 999 })
+  setOptions(res.data.list)
+}
+
+initPage()
+//getTableData()
 
 // ============== 表格控制部分结束 ===============
 
 // 获取需要的字典 可能为空 按需保留
-const setOptions = async () =>{
-}
+
 
 // 获取需要的字典 可能为空 按需保留
-setOptions()
+//setOptions()
 
 
 // 多选数据
@@ -283,6 +360,9 @@ const updateEsCluterFunc = async(row) => {
     type.value = 'update'
     if (res.code === 0) {
         formData.value = res.data.reesc
+        formData.value.groupIds = res.data.reesc.group && res.data.reesc.group.map(i => {
+          return i.ID
+        })
         versionVisible.value = true
         dialogFormVisible.value = true
     }
@@ -373,6 +453,22 @@ const checkEsCluterStatus = async () => {
     }
   }
 }
+
+const changeGroup = async(row, flag) => {
+  if (flag) {
+    return
+  }
+
+  await nextTick()
+  const res = await setEsCluterGroup({
+    cluterId: row.ID,
+    groupIds: row.groupIds
+  })
+  if (res.code === 0) {
+    ElMessage({ type: 'success', message: '角色设置成功' })
+  }
+}
+
 
 const formatStatus = (state) => {
   if (state === 0) {

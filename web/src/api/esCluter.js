@@ -112,3 +112,21 @@ export const checkEsCluter = (data) => {
     data
   })
 }
+
+
+
+// @Tags EsCluter
+// @Summary 设置集群的项目分组
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body {"cluterId":0,"groupId":[]} true "设置集群的项目分组"
+// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
+// @Router /esc/setEsCluterGroup [post]
+export const setEsCluterGroup = (data) => {
+  return service({
+    url: '/esc/setEsCluterGroup',
+    method: 'put',
+    data
+  })
+}

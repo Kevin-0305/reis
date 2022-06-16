@@ -166,3 +166,27 @@ func (escApi *EsCluterApi) CheckEsCluterStatus(c *gin.Context) {
 	}
 
 }
+
+// SaveEsCluterGroup 修改EsCluter组
+// @Tags EsCluter
+// @Summary 修改EsCluter组
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Param data body es.EsCluterGroup true "修改EsCluter组"
+// @Success 200 {string} string "{"success":true,"data":{},"msg":"修改成功"}"
+// @Router /esc/saveEsCluterGroup [post]
+func (escApi *EsCluterApi) SetEsCluterGroup(c *gin.Context) {
+	// cluterGroup := make(map[string]interface{})
+	cluterGroup := struct {
+		CluterId uint   `json:"cluterId"`
+		GroupIds []uint `json:"groupIds"`
+	}{}
+	_ = c.ShouldBindJSON(&cluterGroup)
+	if err := escService.RefreshCluterGroup(cluterGroup.CluterId, cluterGroup.GroupIds); err != nil {
+		global.GVA_LOG.Error("修改失败!", zap.Error(err))
+		response.FailWithMessage("修改失败", c)
+	} else {
+		response.OkWithMessage("修改成功", c)
+	}
+}

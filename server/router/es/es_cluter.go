@@ -20,6 +20,7 @@ func (s *EsCluterRouter) InitEsCluterRouter(Router *gin.RouterGroup) {
 		escRouter.DELETE("deleteEsCluterByIds", escApi.DeleteEsCluterByIds) // 批量删除EsCluter
 		escRouter.PUT("updateEsCluter", escApi.UpdateEsCluter)              // 更新EsCluter
 		escRouter.POST("checkEsCluter", escApi.CheckEsCluterStatus)         // 检测集群状态
+		escRouter.PUT("setEsCluterGroup", escApi.SetEsCluterGroup)          // 更新EsCluterGroup
 
 	}
 	{
