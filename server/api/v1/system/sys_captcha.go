@@ -40,3 +40,15 @@ func (b *BaseApi) Captcha(c *gin.Context) {
 		}, "验证码获取成功", c)
 	}
 }
+
+// Health
+// @Tags Base
+// @Summary 健康检查
+// @Security ApiKeyAuth
+// @accept application/json
+// @Produce application/json
+// @Success 200 {object} response.Response{data=string} "健康检查"
+// @Router /base/health [get]
+func (b *BaseApi) Health(c *gin.Context) {
+	response.OkWithMessage("健康检查", c)
+}

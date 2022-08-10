@@ -14,6 +14,10 @@ type Server struct {
 	Mysql  Mysql           `mapstructure:"mysql" json:"mysql" yaml:"mysql"`
 	Pgsql  Pgsql           `mapstructure:"pgsql" json:"pgsql" yaml:"pgsql"`
 	DBList []SpecializedDB `mapstructure:"db-list" json:"db-list" yaml:"db-list"`
+	//promethues
+	Prom Prom `mapstructure:"prom" json:"prom" yaml:"prom"`
+	// alert
+	Alert Alert `mapstructure:"alert" json:"alert" yaml:"alert"`
 	// oss
 	Local      Local      `mapstructure:"local" json:"local" yaml:"local"`
 	Qiniu      Qiniu      `mapstructure:"qiniu" json:"qiniu" yaml:"qiniu"`

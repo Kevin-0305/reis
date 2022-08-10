@@ -44,10 +44,36 @@
             <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column> -->
         <el-table-column align="left" label="集群名称" prop="cluterName" width="120" />
-        <el-table-column align="left" label="集群状态" prop="status" width="120" >
-          <template #default="scope">{{ formatStatus(scope.row.status) }}</template>
+        <el-table-column align="left" label="集群状态" min-width="150" prop="flag">
+          <template #default="scope">
+            <el-tag
+              v-if="scope.row.status=='green'"
+              type="success"
+              size="small"
+              effect="dark"
+            >
+              red
+            </el-tag>
+            <el-tag
+              v-else-if="scope.row.status=='yellow'"
+              size="small"
+              type="warning"
+              effect="dark"
+            >
+              yellow
+            </el-tag>
+            <el-tag
+              v-else
+              size="small"
+              type="danger"
+              effect="dark"
+            >
+              green
+            </el-tag>
+          </template>
         </el-table-column>
         <el-table-column align="left" label="集群ES版本" prop="version" width="120" />
+        <el-table-column align="left" label="节点数量" prop="nodesNumber" width="120" />
         <el-table-column align="left" label="集群地址" prop="address" width="120" />
         <el-table-column align="left" label="是否启用监控" prop="monitor" width="120">
             <template #default="scope">{{ formatBoolean(scope.row.monitor) }}</template>
@@ -470,14 +496,14 @@ const changeGroup = async(row, flag) => {
 }
 
 
-const formatStatus = (state) => {
-  if (state === 0) {
-    return '不可用'
-  } else if (state === 1) {
-    return '可用'
-  }
+// const formatStatus = (state) => {
+//   if (state === 0) {
+//     return '不可用'
+//   } else if (state === 1) {
+//     return '可用'
+//   }
 
-}
+// }
 </script>
 
 <style>

@@ -1,6 +1,8 @@
 package initialize
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	_ "github.com/flipped-aurora/gin-vue-admin/server/docs"
@@ -8,7 +10,8 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/middleware"
 	"github.com/flipped-aurora/gin-vue-admin/server/router"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/gin-swagger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
@@ -17,6 +20,9 @@ import (
 func Routers() *gin.Engine {
 	Router := gin.Default()
 	esRouter := router.RouterGroupApp.Es
+	promRouter := router.RouterGroupApp.Prom
+	alertRouter := router.RouterGroupApp.Alert
+	webhookRouter := router.RouterGroupApp.WebHook
 	systemRouter := router.RouterGroupApp.System
 	exampleRouter := router.RouterGroupApp.Example
 	// 如果想要不使用nginx代理前端网页，可以修改 web/.env.production 下的
@@ -45,10 +51,20 @@ func Routers() *gin.Engine {
 		PublicGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(200, "ok")
 		})
+		PublicGroup.POST("/", func(c *gin.Context) {
+			body, _ := ioutil.ReadAll(c.Request.Body)
+			fmt.Println(string(body))
+			c.Writer.Write(body)
+		})
+		// Metrics监控
+		PublicGroup.GET("/Metrics", gin.WrapH(promhttp.Handler()))
 	}
 	{
 		systemRouter.InitBaseRouter(PublicGroup) // 注册基础功能路由 不做鉴权
 		systemRouter.InitInitRouter(PublicGroup) // 自动初始化相关
+		promRouter.InitPromHostRouter(PublicGroup)
+		alertRouter.InitAlertRouter(PublicGroup)     // 注册预警相关
+		webhookRouter.InitWebHookRouter(PublicGroup) // 注册webhook相关
 	}
 	PrivateGroup := Router.Group("")
 	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())

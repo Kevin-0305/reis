@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 )
@@ -14,7 +15,8 @@ import (
 type EsCluter struct {
 	global.GVA_MODEL
 	CluterName  string         `json:"cluterName" form:"cluterName" gorm:"column:cluter_name;comment:集群名称;size:50;"`
-	Status      *int           `json:"status" form:"status" gorm:"column:status;comment:集群状态;size:1;"`
+	Status      string         `json:"status" gorm:"-"`
+	NodesNumber int            `json:"nodesNumber" gorm:"-"`
 	Version     string         `json:"version" form:"version" gorm:"column:version;comment:集群ES版本;size:20;"`
 	Address     string         `json:"address" form:"address" gorm:"column:address;comment:集群地址;size:30;"`
 	Monitor     *bool          `json:"monitor" form:"monitor" gorm:"column:monitor;comment:是否启用监控;size:1;"`
@@ -57,4 +59,23 @@ func (es *EsCluter) CheckState() int {
 		return 3
 	}
 	return 0
+}
+
+func (es *EsCluter) GetInfo() (resultMap map[string]interface{}, err error) {
+	url := "http://" + es.Address + "/_cluster/health"
+	client := &http.Client{Timeout: 3 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(es.Address, es.Password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	result, _ := ioutil.ReadAll(resp.Body)
+	resultMap = make(map[string]interface{})
+	err = json.Unmarshal(result, &resultMap)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	return
 }

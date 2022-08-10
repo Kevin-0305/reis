@@ -12,6 +12,9 @@ import run from '@/core/gin-vue-admin.js'
 import auth from '@/directive/auth'
 import { store } from '@/pinia'
 import App from './App.vue'
+import * as echarts from 'echarts'
+
+
 const app = createApp(App)
 app.config.productionTip = false
 
@@ -21,6 +24,6 @@ app
   .use(auth)
   .use(router)
   .use(ElementPlus, { locale: zhCn })
+  .use(echarts)
   .mount('#app')
-
 export default app

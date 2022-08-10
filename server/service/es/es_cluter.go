@@ -1,6 +1,9 @@
 package es
 
 import (
+	"fmt"
+	"sync"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/es"
@@ -59,9 +62,6 @@ func (escService *EsCluterService) GetEsCluterInfoList(info esReq.EsCluterSearch
 	if info.CluterName != "" {
 		db = db.Where("cluter_name LIKE ?", "%"+info.CluterName+"%")
 	}
-	if info.Status != nil {
-		db = db.Where("status = ?", info.Status)
-	}
 	if info.Version != "" {
 		db = db.Where("version > ?", info.Version)
 	}
@@ -70,6 +70,23 @@ func (escService *EsCluterService) GetEsCluterInfoList(info esReq.EsCluterSearch
 		return
 	}
 	err = db.Limit(limit).Offset(offset).Preload("Group").Find(&escs).Error
+
+	var wg sync.WaitGroup
+	for k, _ := range escs {
+		wg.Add(1)
+		go func(esc *es.EsCluter) {
+			defer wg.Done()
+			info, err := esc.GetInfo()
+			if err != nil {
+				fmt.Println(err)
+				return
+			} else {
+				esc.Status = info["status"].(string)
+				esc.NodesNumber = int(info["number_of_data_nodes"].(float64))
+			}
+		}(&escs[k])
+	}
+	wg.Wait()
 	return escs, total, err
 }
 
